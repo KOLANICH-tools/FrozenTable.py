@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=44", "wheel", "setuptools_scm[toml]>=3.4.3", "kaitaiStructCompile.setuptools[toml]"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+[tool.kaitai]
+outputDir = "FrozenTable"
+
+[tool.kaitai.flags]
+readStoresPos = true
+
+[tool.kaitai.formats.cpython_frozen_table]
+path = "database/cpython_frozen_table.ksy"
+
+[tool.kaitai.repo]
+git = "https://github.com/KOLANICH/kaitai_struct_formats.git"
+refspec = "cpython_frozen_table"
+update = true
+localPath = "kaitai_struct_formats"

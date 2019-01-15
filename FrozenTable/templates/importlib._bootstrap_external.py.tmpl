@@ -1,0 +1,11 @@
+def _install(_bootstrap_module):
+	sys = _bootstrap_module.sys
+	_io=sys.modules["_io"]
+	_bi=sys.modules["builtins"]
+	
+	open = _io.open
+	
+	# it's a template, not a set
+	{common}
+	
+	_install(_bootstrap_module)

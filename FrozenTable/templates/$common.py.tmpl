@@ -1,0 +1,7 @@
+__file__ = {filePath}
+{varName} = open(__file__, "rb")  # they are templates, not sets
+{varName}_t = {varName}.read()
+{varName}.close()
+del ({varName})
+exec(compile({varName}_t, __file__, "exec"), globals())
+del ({varName}_t)
