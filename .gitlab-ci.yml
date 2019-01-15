@@ -1,0 +1,96 @@
+image: registry.gitlab.com/kaitaistructcompile.py/kaitai_struct_python_docker:latest
+
+stages:
+  - dependencies
+  - build
+  - test
+
+variables:
+  DOCKER_DRIVER: overlay2
+  SAST_ANALYZER_IMAGE_TAG: latest
+  SAST_DISABLE_DIND: "true"
+
+include:
+  - template: SAST.gitlab-ci.yml
+  #- template: DAST.gitlab-ci.yml
+  #- template: License-Management.gitlab-ci.yml
+  #- template: Container-Scanning.gitlab-ci.yml
+  #- template: Dependency-Scanning.gitlab-ci.yml
+  - template: Code-Quality.gitlab-ci.yml
+
+
+build:
+  tags:
+    - shared
+  stage: build
+  variables:
+    GIT_DEPTH: "1"
+    PYTHONUSERBASE: ${CI_PROJECT_DIR}/python_user_packages
+    HASH: sha256
+    COV_CMD: coverage run -a --source=FrozenTable --branch -m
+
+  before_script:
+    - export PATH="$PATH:$PYTHONUSERBASE/bin" # don't move into `variables`
+    # uncompyle6 deps
+    - pip install --pre --user --upgrade git+https://github.com/rocky/python-spark.git git+https://github.com/rocky/python-xasm.git
+    - export PYTHON_LIB_PATH=$(ls -1 /usr/local/lib/libpython3.*.so.1.0)
+    - readelf -Ws $PYTHON_LIB_PATH | grep PyImport_FrozenModules
+    - export PYTHON_TEST_LIB_PATH=./test_lib_python
+    - cp $PYTHON_LIB_PATH $PYTHON_TEST_LIB_PATH
+
+  cache:
+    paths:
+      - $PYTHONUSERBASE
+      - kaitai_struct_formats
+
+  script:
+    - python3 setup.py bdist_wheel
+    - mkdir wheels
+    - mv ./dist/*.whl ./wheels/FrozenTable-0.CI-py3-none-any.whl
+    - pip3 install --pre --user --upgrade ./wheels/FrozenTable-0.CI-py3-none-any.whl[CLI,ELF,decompilation]
+    - ""
+    - echo "Old _frozen_importlib"
+    - $COV_CMD FrozenTable dump $PYTHON_LIB_PATH
+    - $COV_CMD FrozenTable dump $PYTHON_LIB_PATH _frozen_importlib > ./bootstrap.mshl.old
+    - ""
+    - echo "Shuffling (shouldn't really work because of relocs, which also should be patched)"
+    - $COV_CMD FrozenTable reorder $PYTHON_TEST_LIB_PATH
+    - $COV_CMD FrozenTable dump $PYTHON_TEST_LIB_PATH
+    - ""
+    - echo "Patching"
+    - $COV_CMD FrozenTable make_redirector importlib._bootstrap > ./bootstrap.mshl
+    - $COV_CMD FrozenTable replace $PYTHON_LIB_PATH _frozen_importlib ./bootstrap.mshl
+    - $COV_CMD FrozenTable dump $PYTHON_LIB_PATH
+    - $COV_CMD FrozenTable dump $PYTHON_LIB_PATH _frozen_importlib | ${HASH}sum | grep "$(cat ./bootstrap.mshl | ${HASH}sum)"
+    - $COV_CMD FrozenTable dump --unmarshal --decompile $PYTHON_LIB_PATH _frozen_importlib
+    - ""
+    - $COV_CMD FrozenTable remove $PYTHON_TEST_LIB_PATH __phello__
+    - ""
+    - coverage report -m || true
+    - coverage xml || true
+  artifacts:
+    paths:
+      - wheels
+      - "*.mshl"
+
+    reports:
+      cobertura: ./coverage.xml
+
+pages:
+  stage: test # sast should be in tooling stage
+  tags:
+    - shared
+  image: alpine:latest
+  allow_failure: true
+  before_script:
+    - apk update
+    - apk add doxygen
+    - apk add ttf-freefont graphviz
+  script:
+    - doxygen ./Doxyfile
+    - mv ./docs/html ./public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

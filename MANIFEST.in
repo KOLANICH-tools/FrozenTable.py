@@ -1,0 +1,5 @@
+include UNLICENSE
+include *.md
+include *.tmpl
+include tests
+include .editorconfig

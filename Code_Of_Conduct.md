@@ -1,0 +1,1 @@
+No codes of conduct! Just do what you feel is right and say what you feel is right using the language you feel is right. If you feel that it is right to [make an own fork with a CoC and SJWs](https://en.wikipedia.org/wiki/Bender_Rodriguez), just do that. We here are doing the work, not accusing each other in violating codes of conduct.

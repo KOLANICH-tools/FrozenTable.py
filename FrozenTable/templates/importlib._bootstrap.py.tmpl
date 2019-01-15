@@ -1,0 +1,21 @@
+class UltraSimpleSpec:
+	def __init__(self, name):
+		self.name = name
+
+
+def _install(sys_m, _imp_m):
+	global _imp, sys, _install
+	(_imp, sys) = (_imp_m, sys_m)
+
+	sys.modules["_io"] = _io = _imp.create_builtin(UltraSimpleSpec("_io"))
+	_imp.exec_builtin(_io)
+	sys.modules["builtins"] = _bi = _imp.create_builtin(UltraSimpleSpec("builtins"))
+	_imp.exec_builtin(_bi)
+	Exception = _bi.Exception
+	BaseException = _bi.BaseException
+	open = _io.open
+	
+	# it's a template, not a set
+	{common}
+	
+	_install(sys_m, _imp_m)
