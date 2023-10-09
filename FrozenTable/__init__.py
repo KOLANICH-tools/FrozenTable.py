@@ -9,8 +9,11 @@ import warnings
 import marshal
 import mmap
 from collections import OrderedDict
+from warnings import warn
 
 from .cpython_frozen_table import *
+
+warn("We have moved from M$ GitHub to https://codeberg.org/KOLANICH-tools/FrozenTable.py , read why on https://codeberg.org/KOLANICH/Fuck-GuanTEEnomo .")
 
 frozenTablePtrImportName = "PyImport_FrozenModules"
 frozenTableImportName = "_" + frozenTablePtrImportName
